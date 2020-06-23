@@ -2,6 +2,7 @@
 
 ## 구현내용
 
+- [테스트 영상](https://drive.google.com/file/d/1nbWQiaWq8FQjjCEQl3DsMFSzmKQw0cuV/view?usp=sharing)
 - [깃허브 페이지](https://icymonk.github.io/clo3d-fb-reply-vue)
 - App.vue와 store/user에는 테스트를 편하게 하기 위한 내용이 들어가있습니다.
 - 주요 컴포넌트는 views/ReplyContainer, containers/Reply, components/Avatar, ReplyTextarea입니다.
