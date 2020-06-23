@@ -4,7 +4,7 @@
     v-model.trim="text"
     :style="textareaStyle"
     :placeholder="placeholder"
-    @keypress.enter.exact.prevent="addReply"
+    @keypress.enter.exact.prevent="submit"
     @keydown.esc="$emit('cancel')"
     :rows="rows"
   />
@@ -43,7 +43,7 @@ export default {
     this.$refs.textarea.focus()
   },
   methods: {
-    addReply() {
+    submit() {
       if (!this.text) return
 
       this.$emit("submit", this.text)

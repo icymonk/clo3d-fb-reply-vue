@@ -1,6 +1,6 @@
-import { REPLY_KEY } from "../lib/constant"
+import { REPLY_KEY } from "@/lib/constant"
+import { getId } from "@/lib/common"
 
-const getId = () => Math.round(Math.random() * 99999999)
 export default {
   state: {
     replies: [],

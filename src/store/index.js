@@ -4,13 +4,11 @@ import Vuex from "vuex"
 import reply from "./reply"
 import user from "./user"
 
-import { USER_KEY, REPLY_KEY } from "../lib/constant"
+import { USER_KEY, REPLY_KEY } from "@/lib/constant"
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  namespace: true,
-  state: {},
   getters: {
     users(state) {
       return state.user.users
@@ -29,18 +27,23 @@ export default new Vuex.Store({
       )
     },
   },
-  mutations: {},
   actions: {
-    loadData({ commit }) {
+    loadData({ commit, state }) {
       const users = JSON.parse(localStorage.getItem(USER_KEY) || "[]")
-
-      // authUser
-      users.push({ id: 0, name: "김찬중" })
-
       const replies = JSON.parse(localStorage.getItem(REPLY_KEY) || "[]")
+
+      if (!users.length) {
+        users.push({ id: 0, name: "김찬중" })
+      }
 
       commit("SET_USERS", users)
       commit("SET_REPLIES", replies)
+      commit("SET_AUTHUSER", state.user.users[0])
+    },
+    clearData() {
+      localStorage.removeItem(USER_KEY)
+      localStorage.removeItem(REPLY_KEY)
+      location.reload()
     },
   },
   modules: {

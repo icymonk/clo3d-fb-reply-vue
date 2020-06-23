@@ -7,7 +7,7 @@ export default {
   props: {
     src: {
       type: String,
-      default: require("../assets/blank_user.jpg"),
+      default: require("@/assets/blank_user.jpg"),
     },
     size: {
       type: [Number, String],

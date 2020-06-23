@@ -5,6 +5,7 @@
       :key="item.id"
       :item="item"
       :subItem="findChildrenReply(item.id)"
+      @addReply="addReply"
     />
     <div class="bottom-textarea">
       <Avatar />
@@ -14,21 +15,13 @@
 </template>
 
 <script>
-import Reply from "@/components/Reply"
+import Reply from "@/containers/Reply"
 import Avatar from "@/components/Avatar"
 import ReplyTextarea from "@/components/ReplyTextarea"
 
 export default {
   name: "ReplyContainer",
   components: { Avatar, Reply, ReplyTextarea },
-  props: {
-    replies: {
-      type: Object,
-      default() {
-        return { parents: [], children: [] }
-      },
-    },
-  },
   methods: {
     findChildrenReply(parentReplyId) {
       return this.replies.children.filter(
@@ -40,6 +33,14 @@ export default {
         text,
         authorId: this.$store.state.user.authUser.id,
       })
+      this.$nextTick(() => {
+        scrollTo(0, document.body.scrollHeight)
+      })
+    },
+  },
+  computed: {
+    replies() {
+      return this.$store.getters.arragedReplies
     },
   },
 }

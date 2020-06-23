@@ -1,75 +1,77 @@
 <template>
-  <div :style="rootCoverStyle">
+  <div :style="outerCoverStyle">
     <div
       class="reply-cover"
-      :style="{ marginBottom: isEditing ? '24px' : '' }"
+      :style="innerCoverStyle"
       @mouseenter="moreIconShow = true"
       @mouseleave="moreIconShow = false"
     >
-      <Avatar :size="isSub ? 24 : 32" />
+      <Avatar :size="avatarSize" />
 
+      <!-- 수정 활성화 시 -->
       <ReplyTextarea
         v-if="isEditing"
         :initValue="item.text"
         @submit="updateReply"
         @cancel="isEditing = false"
       />
+      <!-- 텍스트 표시 -->
       <div v-else class="content-cover">
         <div class="text-cover">
           <div class="text">
+            <!-- 작성자 -->
             <div>
               <span class="username">{{ author.name }}</span>
             </div>
+            <br />
+
             <div>
-              <span class="username" v-if="targetUser"
+              <!-- 답글 대상 태깅 -->
+              <span class="username" v-if="targetUser" v-show="taggingShow"
                 >{{ targetUser.name }}
               </span>
+
+              <!-- 실제 댓글 텍스트 -->
               <div class="content">
-                <div
-                  v-for="(line, i) in item.text.split('\n')"
-                  :key="i"
-                  v-text="line"
-                ></div>
+                <div v-for="(line, i) in lines" :key="i" v-text="line"></div>
               </div>
+
+              <!-- 좋아요 표시 -->
               <span
-                v-if="item.likes.length"
+                v-if="likeCount"
                 class="like-count"
                 @mouseenter="likeListShow = true"
                 @mouseleave="likeListShow = false"
-                ><img
-                  width="20"
-                  style="display: inline"
-                  src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 16 16'%3e%3cdefs%3e%3clinearGradient id='a' x1='50%25' x2='50%25' y1='0%25' y2='100%25'%3e%3cstop offset='0%25' stop-color='%2318AFFF'/%3e%3cstop offset='100%25' stop-color='%230062DF'/%3e%3c/linearGradient%3e%3cfilter id='c' width='118.8%25' height='118.8%25' x='-9.4%25' y='-9.4%25' filterUnits='objectBoundingBox'%3e%3cfeGaussianBlur in='SourceAlpha' result='shadowBlurInner1' stdDeviation='1'/%3e%3cfeOffset dy='-1' in='shadowBlurInner1' result='shadowOffsetInner1'/%3e%3cfeComposite in='shadowOffsetInner1' in2='SourceAlpha' k2='-1' k3='1' operator='arithmetic' result='shadowInnerInner1'/%3e%3cfeColorMatrix in='shadowInnerInner1' values='0 0 0 0 0 0 0 0 0 0.299356041 0 0 0 0 0.681187726 0 0 0 0.3495684 0'/%3e%3c/filter%3e%3cpath id='b' d='M8 0a8 8 0 00-8 8 8 8 0 1016 0 8 8 0 00-8-8z'/%3e%3c/defs%3e%3cg fill='none'%3e%3cuse fill='url(%23a)' xlink:href='%23b'/%3e%3cuse fill='black' filter='url(%23c)' xlink:href='%23b'/%3e%3cpath fill='white' d='M12.162 7.338c.176.123.338.245.338.674 0 .43-.229.604-.474.725a.73.73 0 01.089.546c-.077.344-.392.611-.672.69.121.194.159.385.015.62-.185.295-.346.407-1.058.407H7.5c-.988 0-1.5-.546-1.5-1V7.665c0-1.23 1.467-2.275 1.467-3.13L7.361 3.47c-.005-.065.008-.224.058-.27.08-.079.301-.2.635-.2.218 0 .363.041.534.123.581.277.732.978.732 1.542 0 .271-.414 1.083-.47 1.364 0 0 .867-.192 1.879-.199 1.061-.006 1.749.19 1.749.842 0 .261-.219.523-.316.666zM3.6 7h.8a.6.6 0 01.6.6v3.8a.6.6 0 01-.6.6h-.8a.6.6 0 01-.6-.6V7.6a.6.6 0 01.6-.6z'/%3e%3c/g%3e%3c/svg%3e"
-                />
-                <span>{{ item.likes.length }}</span>
+                ><img width="20" :src="likeImgData" />
+                <span>{{ likeCount }}</span>
               </span>
+              <!-- 좋아요 hover 시 명단 -->
               <span v-show="likeListShow" class="like-list">
                 <p v-for="userId in item.likes" :key="userId">
-                  {{
-                    $store.state.user.users.find(user => user.id === userId)
-                      .name
-                  }}
+                  {{ findUsernameById(userId) }}
                 </p>
               </span>
             </div>
           </div>
+
+          <!-- 더보기 버튼 -->
           <div class="more-icon" @click="openMoreList">
             {{ moreIconShow ? "…" : "ㅤ" }}
           </div>
         </div>
 
+        <!-- 댓글 하단 기능버튼목록 -->
         <div class="action-bar">
-          <a href="#" @click="toggleLikeReply"
-            >좋아요 {{ isLiked ? "취소" : "" }}</a
-          >
+          <a @click="toggleLikeReply">좋아요 {{ isLiked ? "취소" : "" }}</a>
           <span>·</span>
-          <a href="#" @click="openReplyArea()">답글달기</a>
+          <a @click="openReplyArea(item.authorId)">답글달기</a>
           <span>·</span>
-          <a href="#">{{ item.createdAt | pastTimeFormat }}</a>
+          <a>{{ item.createdAt | pastTimeFormat }}</a>
         </div>
       </div>
     </div>
 
+    <!-- 답글 리스트 재귀 -->
     <Reply
       v-for="item in subItem"
       :key="item.id"
@@ -78,6 +80,7 @@
       isSub
     />
 
+    <!-- 답글달기 활성화 시 보이는 Textarea -->
     <div v-if="!isSub && textareaShow" class="is-sub">
       <Avatar size="24" />
       <ReplyTextarea
@@ -88,6 +91,7 @@
       />
     </div>
 
+    <!-- 더보기 모달 -->
     <div v-show="moreListShow" class="more-list" @click="moreListShow = false">
       <div class="content">
         <div @click="startEdit">수정</div>
@@ -144,6 +148,8 @@ export default {
       isEditing: false,
       targetUserId: null,
       targetReply: null,
+      likeImgData:
+        "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 16 16'%3e%3cdefs%3e%3clinearGradient id='a' x1='50%25' x2='50%25' y1='0%25' y2='100%25'%3e%3cstop offset='0%25' stop-color='%2318AFFF'/%3e%3cstop offset='100%25' stop-color='%230062DF'/%3e%3c/linearGradient%3e%3cfilter id='c' width='118.8%25' height='118.8%25' x='-9.4%25' y='-9.4%25' filterUnits='objectBoundingBox'%3e%3cfeGaussianBlur in='SourceAlpha' result='shadowBlurInner1' stdDeviation='1'/%3e%3cfeOffset dy='-1' in='shadowBlurInner1' result='shadowOffsetInner1'/%3e%3cfeComposite in='shadowOffsetInner1' in2='SourceAlpha' k2='-1' k3='1' operator='arithmetic' result='shadowInnerInner1'/%3e%3cfeColorMatrix in='shadowInnerInner1' values='0 0 0 0 0 0 0 0 0 0.299356041 0 0 0 0 0.681187726 0 0 0 0.3495684 0'/%3e%3c/filter%3e%3cpath id='b' d='M8 0a8 8 0 00-8 8 8 8 0 1016 0 8 8 0 00-8-8z'/%3e%3c/defs%3e%3cg fill='none'%3e%3cuse fill='url(%23a)' xlink:href='%23b'/%3e%3cuse fill='black' filter='url(%23c)' xlink:href='%23b'/%3e%3cpath fill='white' d='M12.162 7.338c.176.123.338.245.338.674 0 .43-.229.604-.474.725a.73.73 0 01.089.546c-.077.344-.392.611-.672.69.121.194.159.385.015.62-.185.295-.346.407-1.058.407H7.5c-.988 0-1.5-.546-1.5-1V7.665c0-1.23 1.467-2.275 1.467-3.13L7.361 3.47c-.005-.065.008-.224.058-.27.08-.079.301-.2.635-.2.218 0 .363.041.534.123.581.277.732.978.732 1.542 0 .271-.414 1.083-.47 1.364 0 0 .867-.192 1.879-.199 1.061-.006 1.749.19 1.749.842 0 .261-.219.523-.316.666zM3.6 7h.8a.6.6 0 01.6.6v3.8a.6.6 0 01-.6.6h-.8a.6.6 0 01-.6-.6V7.6a.6.6 0 01.6-.6z'/%3e%3c/g%3e%3c/svg%3e",
     }
   },
   methods: {
@@ -180,7 +186,6 @@ export default {
     deleteReply() {
       if (!confirm("댓글을 삭제하시겠습니까?")) return
 
-      console.log(this.targetReply)
       this.$store.dispatch("deleteReply", this.targetReply.id)
     },
     toggleLikeReply() {
@@ -189,10 +194,16 @@ export default {
         userId: this.authUser.id,
       })
     },
+    findUsernameById(userId) {
+      return this.users.find(user => user.id === userId)?.name
+    },
   },
   computed: {
     authUser() {
       return this.$store.state.user.authUser
+    },
+    users() {
+      return this.$store.state.user.users
     },
     author() {
       return this.$store.getters.users.find(
@@ -200,26 +211,39 @@ export default {
       )
     },
     targetUser() {
-      if (!this.item.targetUserId) return null
-
       return this.$store.getters.users.find(
         user => user.id === this.item.targetUserId
       )
     },
-    rootCoverStyle() {
+    lines() {
+      return (this.item.text || "").split("\n")
+    },
+    isLiked() {
+      return this.item.likes.includes(this.authUser.id)
+    },
+    taggingShow() {
+      return this.item.authorId !== this.targetUser.id
+    },
+    avatarSize() {
+      return this.isSub ? 24 : 32
+    },
+    likeCount() {
+      return this.item.likes?.length
+    },
+    outerCoverStyle() {
       return {
         paddingLeft: this.isSub ? "40px" : "0",
         paddingBottom: this.isSub ? "0" : "8px",
       }
     },
-    isLiked() {
-      return this.item.likes.includes(this.authUser.id)
+    innerCoverStyle() {
+      return { marginBottom: this.isEditing ? "24px" : "" }
     },
   },
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "@/assets/variables";
 
 .reply-cover {
@@ -255,6 +279,7 @@ export default {
       background: $base-color-3;
 
       div {
+        display: inline;
         position: relative;
         .username {
           cursor: pointer;
@@ -293,13 +318,12 @@ export default {
       .like-list {
         text-align: center;
         position: absolute;
-        bottom: -32px;
+        top: 32px;
         right: -84px;
         color: $base-color-3;
         font-size: 12px;
         line-height: 20px;
         width: 60px;
-        height: 20px;
         border-radius: 14px;
         background: #ddd;
         p {
@@ -320,6 +344,7 @@ export default {
         margin: {
           left: 4px;
         }
+        cursor: pointer;
         color: $base-color-4;
         text-decoration: none;
         &:visited {
