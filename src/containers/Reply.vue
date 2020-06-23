@@ -55,7 +55,7 @@
           </div>
 
           <!-- 더보기 버튼 -->
-          <div class="more-icon" @click="openMoreList">
+          <div v-if="isMyReply" class="more-icon" @click="openMoreList">
             {{ moreIconShow ? "…" : "ㅤ" }}
           </div>
         </div>
@@ -238,6 +238,9 @@ export default {
     },
     innerCoverStyle() {
       return { marginBottom: this.isEditing ? "24px" : "" }
+    },
+    isMyReply() {
+      return this.item.authorId === this.authUser.id
     },
   },
 }
